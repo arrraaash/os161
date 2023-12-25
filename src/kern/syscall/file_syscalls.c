@@ -38,6 +38,7 @@ int sys_open(const char *filename, int flags, mode_t mode, int *retval) {
 	// allocating space and definging the file table
 	curproc->p_ft[i] = (struct file_handle *)kmalloc(sizeof(struct file_handle));
 	KASSERT(curproc->p_ft[i] != NULL);
+	//complete explanatin is in /vfs/vfspath.c
 	err = vfs_open(checked_fn, flags, 0, &curproc->p_tf[i]->vnode);
 	// destroy the created space and file table in case of error
 	if (err) {
@@ -66,6 +67,7 @@ int sys_open(const char *filename, int flags, mode_t mode, int *retval) {
 	} else {
 		curproc->p_ft[i]->offset = 0;
 	}
+	
 	curproc->p_ft[i]->lock = TRUE;
 	/* 
 	checking the name of file --> done
