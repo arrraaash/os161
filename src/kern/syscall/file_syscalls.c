@@ -19,15 +19,15 @@
 
 int sys_open(const char *filename, int flags, mode_t mode, int *retval) {
 	
-	char dest[PATH_MAX];
+	char checked_fn[PATH_MAX];
 	size_t len = PATH_MAX;
 	size_t got;
 	int i=3; // first 3 is already used by STDIN,STDOUT,STDERR
-	int copyinside = copyinstr(filename, dest , len, &got);  //chacking the validity of the filename
+	int err=0;
+	int copyinside = copyinstr(filename, checked_fn , len, &got);  //chacking the validity of the filename
 	if (copyinside) {    //copyinstr returns null-terminated on success
 		return EFAULT;
 	}
-
 	// curproc is always the current thread's process definged in current.h
 	while(curproc->p_ft[i] != NULL){
 		if(i == OPEN_MAX-1){
@@ -38,7 +38,7 @@ int sys_open(const char *filename, int flags, mode_t mode, int *retval) {
 	// allocating space and definging the file table
 	curproc->p_ft[i] = (struct file_handle *)kmalloc(sizeof(struct file_handle));
 	KASSERT(curproc->p_ft[i] != NULL);
-	err = vfs_open(dest, flags, 0, &curproc->p_tf[i]->vnode);
+	err = vfs_open(checked_fn, flags, 0, &curproc->p_tf[i]->vnode);
 	// destroy the created space and file table in case of error
 	if (err) {
 		kfree(curproc->p_ft[i]);
@@ -71,7 +71,8 @@ int sys_open(const char *filename, int flags, mode_t mode, int *retval) {
 	checking the name of file --> done
 	checking the mode --> done
 	considering append --> done
-	considering creat -->
+	considering creat --> creat if not exist
+	how to know it exists
 	considering excl -->
 	considering trun -->
 
