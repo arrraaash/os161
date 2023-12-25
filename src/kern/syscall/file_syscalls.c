@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <types.h>
 #include <proc.h>
 #include <current.h>
@@ -21,10 +22,12 @@ int sys_open(const char *filename, int flags, mode_t mode, int *retval) {
 	char dest[PATH_MAX];
 	size_t len = PATH_MAX;
 	size_t got;
+	int i=3; // first 3 is already used by STDIN,STDOUT,STDERR
 	int copyinside = copyinstr(filename, dest , len, &got);  //chacking the validity of the filename
 	if (copyinside) {    //copyinstr returns null-terminated on success
 		return EFAULT;
 	}
+
 	// curproc is always the current thread's process definged in current.h
 	while(curproc->p_ft[i] != NULL){
 		if(i == OPEN_MAX-1){
@@ -52,34 +55,26 @@ int sys_open(const char *filename, int flags, mode_t mode, int *retval) {
 		case O_RDWR:
 			curproc->p_ft[i]->flag = O_RDWR;
 			break;
-		default:
+		default:   // one of above mode should exsit otherwise we have an error
 			vfs_close(curproc->p_ft[i]->vnode);
 			kfree(curproc->p_ft[i]);
 			curproc->p_ft[i] = NULL;
 			return EINVAL;
 	}
-	if(flags & O_APPEND){
-		struct stat statbuf;
-		err = VOP_STAT(curproc->p_ft[i]->vnode, &statbuf);
-		if (err){
-			kfree(curproc->file_table[i]);
-			curproc->file_table[i] = NULL;
-			return err;
-		}
-		curproc->file_table[i]->offset = statbuf.st_size;
+	if(flags & O_APPEND){  // if there is append the difference is we have to continue writing/reading from a last index
+		curproc->p_ft[i]->offset = ;//???????????
 	} else {
-		curproc->file_table[i]->offset = 0;
+		curproc->p_ft[i]->offset = 0;
 	}
-	curproc->file_table[i]->destroy_count = 1;
-	curproc->file_table[i]->con_file = false;
-	mode = flags & O_ACCMODE;
+	curproc->p_ft[i]->destroy_count = 1;
+	curproc->p_ft[i]->con_file = false;
 	
-	curproc->file_table[i]->lock = lock_create("filehandle_lock");
+	curproc->file_table[i]->lock = TRUE;
 	if(curproc->file_table[i]->lock == NULL) {	
 		vfs_close(curproc->file_table[i]->vnode);
 		kfree(curproc->file_table[i]);
 		curproc->file_table[i] = NULL;
 	}
-	*retval = i;
+	retval = p_ft[i];
 	return 0;
 }
