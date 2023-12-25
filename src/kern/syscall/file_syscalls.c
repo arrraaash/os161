@@ -4,12 +4,12 @@
 #include <current.h>
 #include <vnode.h>
 #include <vfs.h>
+//#include <fh.h>
 #include <uio.h>
 #include <synch.h>
 #include <kern/errno.h>
 #include <kern/fcntl.h>
 #include <copyinout.h>
-#include <file_syscall.h>
 #include <limits.h>
 #include <kern/unistd.h>
 #include <endian.h>
@@ -62,19 +62,26 @@ int sys_open(const char *filename, int flags, mode_t mode, int *retval) {
 			return EINVAL;
 	}
 	if(flags & O_APPEND){  // if there is append the difference is we have to continue writing/reading from a last index
-		curproc->p_ft[i]->offset = ;//???????????
+		curproc->p_ft[i]->offset = offset + 1; //not sure just have to try
 	} else {
 		curproc->p_ft[i]->offset = 0;
 	}
-	curproc->p_ft[i]->destroy_count = 1;
-	curproc->p_ft[i]->con_file = false;
-	
-	curproc->file_table[i]->lock = TRUE;
-	if(curproc->file_table[i]->lock == NULL) {	
-		vfs_close(curproc->file_table[i]->vnode);
-		kfree(curproc->file_table[i]);
-		curproc->file_table[i] = NULL;
+	curproc->p_ft[i]->lock = TRUE;
+	/* 
+	checking the name of file --> done
+	checking the mode --> done
+	considering append --> done
+	considering creat -->
+	considering excl -->
+	considering trun -->
+
+	*/
+	if(curproc->p_ft[i]->lock == NULL) {	
+		vfs_close(curproc->p_ft[i]->vnode);
+		kfree(curproc->p_ft[i]);
+		curproc->p_ft[i] = NULL;
 	}
+	// it returns the pointer to the created file table
 	retval = p_ft[i];
 	return 0;
 }
