@@ -87,10 +87,13 @@ int sys_open(const char *filename, int flags, mode_t mode, int *retval) {
 		curproc->p_ft[i] = NULL;
 	}
 	// it returns the pointer to the created file table
-	retval = p_ft[i];
+	*retval = i;
 	return 0;
 }
 
-int SYS_close(int fd, *retval){
-
+int SYS_close(int fd){
+	if (curproc->p_ft[fd] != NULL || curproc->p_ft[fd]->lock == TRUE) {
+		kfree(curproc->p_ft[fd]);
+		curproc->p_ft[fd] = NULL;
+	}
 }
