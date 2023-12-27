@@ -90,3 +90,7 @@ int sys_open(const char *filename, int flags, mode_t mode, int *retval) {
 	retval = p_ft[i];
 	return 0;
 }
+
+int SYS_close(int fd, *retval){
+
+}
