@@ -97,8 +97,10 @@ int SYS_close(int fd){
 		curproc->p_ft[fd] = NULL;
 	}
 }
-
+// we have to check if the buffer is valid, we need to initialize struct uio{}  before useing vop_write because we need
+// to pass vnode pointers and uio into the MACRO
 ssize_t write(int fd, const void *buf, size_t nbytes){
+	// checking if fd is valid -- the write flage -- 
 	if(curproc->p_ft[fd]==NULL || (curproc->p_ft[fd]->flags & O_WRONLY ==0)){
 		return EBADF;
 	}
