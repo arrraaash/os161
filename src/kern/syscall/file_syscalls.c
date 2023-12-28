@@ -97,3 +97,12 @@ int SYS_close(int fd){
 		curproc->p_ft[fd] = NULL;
 	}
 }
+
+ssize_t write(int fd, const void *buf, size_t nbytes){
+	if(curproc->p_ft[fd]==NULL || (curproc->p_ft[fd]->flags & O_WRONLY ==0)){
+		return EBADF;
+	}
+	curproc->p_ft[fd]->lock = FALSE;
+	
+
+}
