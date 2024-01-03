@@ -105,6 +105,20 @@ ssize_t write(int fd, const void *buf, size_t nbytes){
 		return EBADF;
 	}
 	curproc->p_ft[fd]->lock = FALSE;
-	
+	struct uio uio_buff;
 
+	/*
+	struct iovec     *uio_iov;	// Data blocks 
+	unsigned          uio_iovcnt;	// Number of iovecs
+	off_t             uio_offset;	// Desired offset into object 
+	size_t            uio_resid;	// Remaining amt of data to xfer 
+	enum uio_seg      uio_segflg;	// What kind of pointer we have 
+	enum uio_rw       uio_rw;	// Whether op is a read or write 
+	struct addrspace *uio_space;	// Address space for user pointer 
+*/
+//int (*vop_write)(struct vnode *file, struct uio *uio);
+int (*vop_write)(struct vnode *file, uio_buf){
+	
+}
+	
 }
