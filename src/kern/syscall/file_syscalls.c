@@ -17,7 +17,7 @@
 #include <lib.h>
 
 //ARASH
-int sys_open(const char *filename, int flags, mode_t mode, int *retval) {
+int sys_open(const char *filename, int flags, int *retval) {
 	
 	char checked_fn[PATH_MAX];
 	size_t len = PATH_MAX;
@@ -35,18 +35,36 @@ int sys_open(const char *filename, int flags, mode_t mode, int *retval) {
 		}
 		i++;
 	}
+	// checking the flags
+	switch (flags){
+		case O_RDONLY: break;
+		case O_WRONLY: break;
+		case O_RDWR: break;
+
+		case O_RDONLY|O_CREAT: break;
+		case O_WRONLY|O_CREAT: break;
+		case O_RDWR|O_CREAT: break;
+
+		case O_RDWR|O_CREAT|O_TRUNC: break;
+
+		case O_WRONLY|O_APPEND: break;
+		case O_RDWR|O_APPEND: break;
+
+		default: return EINVAL;
+	}
 	// allocating space and definging the file table
 	curproc->p_ft[i] = (struct file_handle *)kmalloc(sizeof(struct file_handle));
 	KASSERT(curproc->p_ft[i] != NULL);
 	//complete explanatin is in /vfs/vfspath.c
-	err = vfs_open(checked_fn, flags, mode, &curproc->p_tf[i]->vnode);
+	err = vfs_open(checked_fn, flags, &curproc->p_tf[i]->vnode);
 	// destroy the created space and file table in case of error
 	if (err) {
 		kfree(curproc->p_ft[i]);
 		curproc->p_ft[i] = NULL;
 		return err;
 	}
-	how = flags & O_ACCMODE;  //take from implementation of vfs_open()
+	curproc->p_ft[i]->flag = flags;
+	/* how = flags & O_ACCMODE;  //take from implementation of vfs_open()
 	switch(how){
 		case O_RDONLY:
 			curproc->p_ft[i]->flag = O_RDONLY;
@@ -62,25 +80,26 @@ int sys_open(const char *filename, int flags, mode_t mode, int *retval) {
 			kfree(curproc->p_ft[i]);
 			curproc->p_ft[i] = NULL;
 			return EINVAL;
+	} */
+	switch (flags){  // if there is append the difference is we have to continue writing/reading from a last index
+		case O_WRONLY|O_APPEND : curproc->p_ft[i]->offset = offset + 1; //not sure just have to try ????
+		case O_RDWR|O_APPEND :  curproc->p_ft[i]->offset = offset + 1; //not sure just have to try ????
+		default: curproc->p_ft[i]->offset = 0;
 	}
-	if (openflags & O_APPEND){  // if there is append the difference is we have to continue writing/reading from a last index
-		curproc->p_ft[i]->offset = offset + 1; //not sure just have to try
-	} else {
-		curproc->p_ft[i]->offset = 0;
-	}
-	
+	// let it to have read or write after open
 	curproc->p_ft[i]->lock = TRUE;
 	/* 
 	checking the name of file --> done
 	checking the mode --> done
 	considering append --> done
-	considering creat --> implemented in vfs_open()
-	considering excl --> implemented in vfs_open()
-	considering trun --> implemented in vfs_open()
+	considering creat --> implemented in vfs_open() but i also check at first
+	considering excl --> implemented in vfs_open() but i also check at first
+	considering trunc --> implemented in vfs_open() but i also check at first
 	*/
 	// i just configur vars and flages which are allocated in mem -> things we have to know about our file !!!!!!!
 	//  but actuall work is done in vfs_open()
 	
+	// maybe its not necessary but I is added because the lock is important to get TRUE after open and we have to see the error if its not
 	if(curproc->p_ft[i]->lock == NULL) {	
 		vfs_close(curproc->p_ft[i]->vnode);
 		kfree(curproc->p_ft[i]);
