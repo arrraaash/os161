@@ -37,7 +37,10 @@
  */
 
 #include <spinlock.h>
-
+// added by ARASH ****//
+#include <limits.h>
+//#include <file_syscall.h>
+//*******************//
 struct addrspace;
 struct thread;
 struct vnode;
@@ -73,8 +76,11 @@ struct proc {
 	struct vnode *p_cwd;		/* current working directory */
 
 	/* add more material here as needed */
+	//ARASH*********//
+	// fh is built in /include/fh.h which is a file I created
 	struct fh *p_ft[OPEN_MAX];   /* adding the file table to the proc model */
 	int i;
+	//*************//
 };
 
 /* This is the process structure for the kernel and for kernel-only threads. */

@@ -16,7 +16,7 @@
 #include <stat.h>
 #include <lib.h>
 
-
+//ARASH
 int sys_open(const char *filename, int flags, mode_t mode, int *retval) {
 	
 	char checked_fn[PATH_MAX];
