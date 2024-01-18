@@ -118,34 +118,30 @@ int SYS_close(int fd){
 }
 // we have to check if the buffer is valid, we need to initialize struct uio{}  before useing vop_write because we need
 // to pass vnode pointers and uio into the MACRO
-ssize_t write(int fd, const void *buf, size_t bufferlen){
+ssize_t write(int fd, const void *buf, size_t nbytes, *retval){
+
 	// checking if fd is valid -- the write flage -- 
-	if(curproc->p_ft[fd]==NULL || (curproc->p_ft[fd]->flags & O_WRONLY ==0)){
+	if()
+	if(fd>OPEN_MAX || fd<0 || curproc->p_ft[fd]==NULL || (curproc->p_ft[fd]->flags & O_WRONLY ==0)){
 		return EBADF;
 	}
 	curproc->p_ft[fd]->lock = FALSE;
-	char *buffer = (char *)kmalloc(sizeof(*buf)*bufferlen);
+	char *buffer = (char *)kmalloc(sizeof(*buf)*nbytes);
+
+	// completly explained in uio.h line 127
 	//it is used to specify the buffer and length of the data to be read or written.
+
 	struct uio uio_buff;
-	//
+	// complete explanation is in iovec.h (it is used for distinguish user pointer from kernel pointer) 
 	struct iovec iov;
+	uio_kinit(&iov, &uio_buff, buffer, nbytes, curproc->p_ft[fd]->offset, UIO_WRITE); //UIO_WRITE -> uio -> enum uio_rw
 
-	/*
-	struct iovec     *uio_iov;	// Data blocks 
-	unsigned          uio_iovcnt;	// Number of iovecs
-	off_t             uio_offset;	// Desired offset into object 
-	size_t            uio_resid;	// Remaining amt of data to xfer 
-	enum uio_seg      uio_segflg;	// What kind of pointer we have 
-	enum uio_rw       uio_rw;	// Whether op is a read or write 
-	struct addrspace *uio_space;	// Address space for user pointer 
-*/
-
-uio_kinit(&iov, &uio_buff, buffer, bufferlen, curproc->p_ft[fd]->offset, UIO_WRITE);
-//int (*vop_write)(struct vnode *file, struct uio *uio);
-int vop_write_res = vop_write(curproc->p_ft[fd]->vnode, &uio);
-if (vop_write_res){
-	kfree(buffer);
-	return vop_write_res;
-}
+	int vop_write_res = vop_write(curproc->p_ft[fd]->vnode, &uio);
+	if (vop_write_res){
+		kfree(buffer);
+		return vop_write_res;
+	}
+	curproc->p_ft[fd]->offset=uio_buff->uio_offsetset;
+	*retval = 
 
 }
