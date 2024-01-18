@@ -118,13 +118,17 @@ int SYS_close(int fd){
 }
 // we have to check if the buffer is valid, we need to initialize struct uio{}  before useing vop_write because we need
 // to pass vnode pointers and uio into the MACRO
-ssize_t write(int fd, const void *buf, size_t nbytes){
+ssize_t write(int fd, const void *buf, size_t bufferlen){
 	// checking if fd is valid -- the write flage -- 
 	if(curproc->p_ft[fd]==NULL || (curproc->p_ft[fd]->flags & O_WRONLY ==0)){
 		return EBADF;
 	}
 	curproc->p_ft[fd]->lock = FALSE;
+	char *buffer = (char *)kmalloc(sizeof(*buf)*bufferlen);
+	//it is used to specify the buffer and length of the data to be read or written.
 	struct uio uio_buff;
+	//
+	struct iovec iov;
 
 	/*
 	struct iovec     *uio_iov;	// Data blocks 
@@ -135,9 +139,13 @@ ssize_t write(int fd, const void *buf, size_t nbytes){
 	enum uio_rw       uio_rw;	// Whether op is a read or write 
 	struct addrspace *uio_space;	// Address space for user pointer 
 */
+
+uio_kinit(&iov, &uio_buff, buffer, bufferlen, curproc->p_ft[fd]->offset, UIO_WRITE);
 //int (*vop_write)(struct vnode *file, struct uio *uio);
-int (*vop_write)(struct vnode *file, uio_buf){
-	//??
+int vop_write_res = vop_write(curproc->p_ft[fd]->vnode, &uio);
+if (vop_write_res){
+	kfree(buffer);
+	return vop_write_res;
 }
-	
+
 }
