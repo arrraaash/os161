@@ -95,7 +95,7 @@ proc_create(const char *name)
 	for (int i=0; i<3;i++){
 		proc->p_ft[i]->name = "con:";
 	}
-	//
+	
 
 	/*---------------------*/
 

@@ -110,7 +110,7 @@ int sys_open(const char *filename, int flags, int *retval) {
 	return 0;
 }
 
-int SYS_close(int fd){
+int sys_close(int fd){
 	if (curproc->p_ft[fd] != NULL || curproc->p_ft[fd]->lock == TRUE) {
 		kfree(curproc->p_ft[fd]);
 		curproc->p_ft[fd] = NULL;
@@ -119,7 +119,7 @@ int SYS_close(int fd){
 }
 // we have to check if the buffer is valid, we need to initialize struct uio{}  before useing vop_write because we need
 // to pass vnode pointers and uio into the MACRO
-ssize_t write(int fd, const void *buf, size_t nbytes, *retval){
+int sys_write(int fd, const void *buf, size_t nbytes, *retval){
 
 	// checking if fd is valid -- the write flage -- 
 	if()
