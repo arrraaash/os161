@@ -48,6 +48,8 @@
 #include <current.h>
 #include <addrspace.h>
 #include <vnode.h>
+#include <fh.h>
+#include <limits.h>
 
 /*
  * The process for the kernel; this holds all the kernel-only threads.
@@ -86,6 +88,9 @@ proc_create(const char *name)
 	// i here is the file descriptor which is an integer
 	for(int i=0; i< OPEN_MAX; i++){
 		proc->p_ft[i] = NULL;
+	}
+	for (int i=0; i<3;i++){
+		proc->p_ft[i]->name = "con:";
 	}
 	
 

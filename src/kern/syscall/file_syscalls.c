@@ -4,7 +4,7 @@
 #include <current.h>
 #include <vnode.h>
 #include <vfs.h>
-//#include <fh.h>
+#include <fh.h>
 #include <uio.h>
 #include <synch.h>
 #include <kern/errno.h>
@@ -64,7 +64,7 @@ int sys_open(const char *filename, int flags, int *retval) {
 		return err;
 	}
 	curproc->p_ft[i]->flag = flags;
-	/* how = flags & O_ACCMODE;  //take from implementation of vfs_open()
+	/* how = flags & O_ACCMODE;  //take from implementation of vfs_open() --->changed it to the way is done upper
 	switch(how){
 		case O_RDONLY:
 			curproc->p_ft[i]->flag = O_RDONLY;
