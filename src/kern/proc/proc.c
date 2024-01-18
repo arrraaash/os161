@@ -51,6 +51,9 @@
 #include <fh.h>
 #include <limits.h>
 
+#include <limits.h> 	// for OPEN_MAX (LUIGI)
+#include <vfs.h> 		// for vfs_close (LUIGI)
+
 /*
  * The process for the kernel; this holds all the kernel-only threads.
  */
@@ -181,10 +184,10 @@ proc_destroy(struct proc *proc)
 
 	/* I ADDED THIS PART FOR FILE CLOSING WHEN PROC IS CLOSED */
 	
-	for (int i=0; i<MAX_OPEN;i++){
+	/* for (int i=0; i<OPEN_MAX;i++){
 		vfs_close(proc->p_ft[i]->I_fd);
 		proc->p_ft[i] = NULL;
-	}
+	} */
 	/* MY MODIFICATION ENDS HERE */
 
 	KASSERT(proc->p_numthreads == 0);
