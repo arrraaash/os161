@@ -53,7 +53,7 @@ int sys_open(const char *filename, int flags, int *retval) {
 		default: return EINVAL;
 	}
 	// allocating space and definging the file table
-	curproc->p_ft[i] = (struct file_handle *)kmalloc(sizeof(struct file_handle));
+	curproc->p_ft[i] = (struct fh *)kmalloc(sizeof(struct fh));
 	KASSERT(curproc->p_ft[i] != NULL);
 	//complete explanatin is in /vfs/vfspath.c
 	err = vfs_open(checked_fn, flags, &curproc->p_tf[i]->vnode);
