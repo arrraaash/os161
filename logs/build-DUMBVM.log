@@ -1,8 +1,7 @@
--e ./configure LOGS
+-e bmake clean LOGS
 
-Checking for <err.h>... yes
-Checking for ntohll()...no
-Generating defs.mk.
+rm -f *.o *.a tags kernel
+rm -rf includelinks
 -e 
 
 
@@ -287,7 +286,7 @@ mips-harvard-os161-gcc -g -Og -Wall -W -Wwrite-strings -Wmissing-prototypes -Wer
 ../../conf/newvers.sh DUMBVM
 mips-harvard-os161-gcc -g -Og -Wall -W -Wwrite-strings -Wmissing-prototypes -Werror -std=gnu99 -mno-abicalls -fno-pic -ffixed-23 -nostdinc -I../../include -I../../dev -I. -Iincludelinks -ffreestanding -D_KERNEL -c vers.c
 mips-harvard-os161-ld   -nostdlib -T ../../arch/mips/conf/ldscript __printf.o snprintf.o atoi.o bzero.o memcpy.o memmove.o memset.o strcat.o strchr.o strcmp.o strcpy.o strlen.o strrchr.o strtok_r.o autoconf.o beep.o console.o random.o rtclock.o beep_ltimer.o con_lser.o emu.o emu_att.o lamebus.o lhd.o lhd_att.o lrandom.o lrandom_att.o lser.o lser_att.o ltimer.o ltimer_att.o ltrace.o ltrace_att.o random_lrandom.o rtclock_ltimer.o semfs_fsops.o semfs_obj.o semfs_vnops.o sfs_balloc.o sfs_bmap.o sfs_dir.o sfs_fsops.o sfs_inode.o sfs_io.o sfs_vnops.o array.o bitmap.o bswap.o kgets.o kprintf.o misc.o time.o uio.o main.o menu.o proc.o loadelf.o runprogram.o time_syscalls.o arraytest.o bitmaptest.o fstest.o kmalloctest.o semunit.o synchtest.o threadlisttest.o threadtest.o tt3.o clock.o spinlock.o spl.o synch.o thread.o threadlist.o device.o devnull.o vfscwd.o vfsfail.o vfslist.o vfslookup.o vfspath.o vnode.o kmalloc.o adddi3.o anddi3.o ashldi3.o ashrdi3.o cmpdi2.o divdi3.o iordi3.o lshldi3.o lshrdi3.o moddi3.o muldi3.o negdi2.o notdi2.o qdivrem.o subdi3.o ucmpdi2.o udivdi3.o umoddi3.o xordi3.o setjmp.o trap.o syscall.o cpu.o switch.o switchframe.o thread_machdep.o threadstart.o dumbvm.o ram.o copyinout.o cache-mips161.o exception-mips1.o tlb-mips161.o lamebus_machdep.o start.o vers.o -o kernel
-*** This is DUMBVM build #30 ***
+*** This is DUMBVM build #61 ***
 mips-harvard-os161-size kernel
    text	   data	    bss	    dec	    hex	filename
  146088	    192	   6976	 153256	  256a8	kernel
@@ -300,7 +299,7 @@ mips-harvard-os161-size kernel
 
 bmake install LOGS
 
-[ -d /home/os161user/os161/root ] || mkdir /home/os161user/os161/root
-cp kernel /home/os161user/os161/root/kernel-DUMBVM
-rm -f /home/os161user/os161/root/kernel
-ln -s kernel-DUMBVM /home/os161user/os161/root/kernel
+[ -d /home/os161user/repo/os161/root ] || mkdir /home/os161user/repo/os161/root
+cp kernel /home/os161user/repo/os161/root/kernel-DUMBVM
+rm -f /home/os161user/repo/os161/root/kernel
+ln -s kernel-DUMBVM /home/os161user/repo/os161/root/kernel
