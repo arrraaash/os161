@@ -2,7 +2,7 @@ ROOTDIR 			:= $(realpath .)
 ROOT_DIR      		:= $(ROOTDIR)/root
 OSTREE				:= $(ROOT_DIR)
 OLD_OSTREE          := $$(HOME)/os161/root
-LOGS_DIR      		:= $(ROOTDIR)/logs
+LOGS_DIR      		:= $(HOME)/logs
 SRC_DIR      		:= $(ROOTDIR)/src
 KERN_DIR    		:= $(SRC_DIR)/kern
 KERN_CONF_DIR		:= $(KERN_DIR)/conf
@@ -16,7 +16,7 @@ make-dirs:
 
 PHONY: print-OSTREE
 print-OSTREE:
-	@echo $(OLD_OSTREE)
+	@echo $(OSTREE)
 
 
 # CONFIGURE CUSTOM SRC TREE FOR BUILD
