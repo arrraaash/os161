@@ -137,7 +137,7 @@ ssize_t write(int fd, const void *buf, size_t nbytes){
 */
 //int (*vop_write)(struct vnode *file, struct uio *uio);
 int (*vop_write)(struct vnode *file, uio_buf){
-	
+	//??
 }
 	
 }
