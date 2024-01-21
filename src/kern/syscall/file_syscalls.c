@@ -1,4 +1,3 @@
-#include <stdlib.h>
 #include <types.h>
 #include <proc.h>
 #include <current.h>
@@ -15,6 +14,7 @@
 #include <endian.h>
 #include <stat.h>
 #include <lib.h>
+#include <syscall.h>
 
 //ARASH
 int sys_open(const char *filename, int flags, int *retval) {
@@ -22,12 +22,13 @@ int sys_open(const char *filename, int flags, int *retval) {
 	char checked_fn[PATH_MAX];
 	size_t len = PATH_MAX;
 	size_t got;
-	int fd=3; // first 3 is already used by STDIN,STDOUT,STDERR
-	int err=0;
-	int copyinside = copyinstr(filename, checked_fn , len, &got);  //chacking the validity of the filename
+	int fd = 3; // first 3 is already used by STDIN,STDOUT,STDERR
+	int err = 0;
+	int copyinside = copyinstr((const_userptr_t)filename, (char *)checked_fn , (size_t)len, (size_t *)&got);  //chacking the validity of the filename
 	if (copyinside) {    //copyinstr returns null-terminated on success
 		return EFAULT;
 	}
+
 	// curproc is always the current thread's process definged in current.h
 	while(curproc->p_ft[fd] != NULL){
 		if(fd == OPEN_MAX-1){
@@ -56,15 +57,15 @@ int sys_open(const char *filename, int flags, int *retval) {
 	curproc->p_ft[fd] = (struct fh *)kmalloc(sizeof(struct fh));
 	KASSERT(curproc->p_ft[fd] != NULL);
 	//complete explanatin is in /vfs/vfspath.c
-	err = vfs_open(checked_fn, flags, &curproc->p_tf[fd]->vnode);
+	err = vfs_open(checked_fn, flags, 0,&curproc->p_ft[fd]->I_fd);
 	// destroy the created space and file table in case of error
 	if (err) {
 		kfree(curproc->p_ft[fd]);
 		curproc->p_ft[fd] = NULL;
 		return err;
 	}
-	curproc->p_ft[fd]->flag = flags;
-	/* how = flags & O_ACCMODE;  //take from implementation of vfs_open() --->changed it to the way is done upper
+	//curproc->p_ft[fd]->flag = flags;
+	int how = flags & O_ACCMODE;  //take from implementation of vfs_open() --->changed it to the way is done upper
 	switch(how){
 		case O_RDONLY:
 			curproc->p_ft[fd]->flag = O_RDONLY;
@@ -76,18 +77,18 @@ int sys_open(const char *filename, int flags, int *retval) {
 			curproc->p_ft[fd]->flag = O_RDWR;
 			break;
 		default:   // one of above mode should exsit otherwise we have an error
-			vfs_close(curproc->p_ft[fd]->vnode);
+			vfs_close(curproc->p_ft[fd]->I_fd);
 			kfree(curproc->p_ft[fd]);
 			curproc->p_ft[fd] = NULL;
 			return EINVAL;
-	} */
+	}
 	switch (flags){  // if there is append the difference is we have to continue writing/reading from a last index
-		case O_WRONLY|O_APPEND : curproc->p_ft[fd]->offset = offset + 1; //not sure just have to try ????
-		case O_RDWR|O_APPEND :  curproc->p_ft[fd]->offset = offset + 1; //not sure just have to try ????
+		case O_WRONLY|O_APPEND : curproc->p_ft[fd]->offset++; //not sure just have to try ????
+		case O_RDWR|O_APPEND :  curproc->p_ft[fd]->offset++; //not sure just have to try ????
 		default: curproc->p_ft[fd]->offset = 0;
 	}
 	// let it to have read or write after open
-	curproc->p_ft[fd]->lock = TRUE;
+	curproc->p_ft[fd]->lock = true;
 	/* 
 	checking the name of file --> done
 	checking the mode --> done
@@ -100,18 +101,18 @@ int sys_open(const char *filename, int flags, int *retval) {
 	//  but actuall work is done in vfs_open()
 	
 	// maybe its not necessary but I is added because the lock is important to get TRUE after open and we have to see the error if its not
-	if(curproc->p_ft[fd]->lock == NULL) {	
-		vfs_close(curproc->p_ft[fd]->vnode);
+	/* if(curproc->p_ft[fd]->lock == NULL) {	
+		vfs_close(curproc->p_ft[fd]->I_fd);
 		kfree(curproc->p_ft[fd]);
 		curproc->p_ft[fd] = NULL;
-	}
+	} */
 	// it returns the pointer to the created file table
 	*retval = fd;
 	return 0;
 }
 
 int sys_close(int fd){
-	if (curproc->p_ft[fd] != NULL || curproc->p_ft[fd]->lock == TRUE) {
+	if (curproc->p_ft[fd] != NULL || curproc->p_ft[fd]->lock == true) {
 		kfree(curproc->p_ft[fd]);
 		curproc->p_ft[fd] = NULL;
 	}
@@ -119,14 +120,13 @@ int sys_close(int fd){
 }
 // we have to check if the buffer is valid, we need to initialize struct uio{}  before useing vop_write because we need
 // to pass vnode pointers and uio into the MACRO
-int sys_write(int fd, const void *buf, size_t nbytes, *retval){
+int sys_write(int fd, const void *buf, size_t nbytes,int32_t *retval){
 
 	// checking if fd is valid -- the write flage -- 
-	if()
-	if(fd>OPEN_MAX || fd<0 || curproc->p_ft[fd]==NULL || (curproc->p_ft[fd]->flags & O_WRONLY ==0)){
+	if(fd>OPEN_MAX || fd<0 || curproc->p_ft[fd]==NULL || (curproc->p_ft[fd]->flag==O_RDONLY)){
 		return EBADF;
 	}
-	curproc->p_ft[fd]->lock = FALSE;
+	curproc->p_ft[fd]->lock = false;
 	char *buffer = (char *)kmalloc(sizeof(*buf)*nbytes);
 
 	// completly explained in uio.h line 127
@@ -137,14 +137,14 @@ int sys_write(int fd, const void *buf, size_t nbytes, *retval){
 	struct iovec iov;
 	uio_kinit(&iov, &uio_buff, buffer, nbytes, curproc->p_ft[fd]->offset, UIO_WRITE); //UIO_WRITE -> uio -> enum uio_rw
 
-	int vop_write_res = vop_write(curproc->p_ft[fd]->vnode, &uio);
+	int vop_write_res = VOP_WRITE(curproc->p_ft[fd]->I_fd, &uio_buff);
 	if (vop_write_res){
 		kfree(buffer);
 		return vop_write_res;
 	}
-	*retval = uio_buff->uio_offset - curproc->p_ft[fd]->offset;
-	curproc->p_ft[fd]->offset = uio_buff->uio_offset;
+	*retval = uio_buff.uio_offset - curproc->p_ft[fd]->offset;
+	curproc->p_ft[fd]->offset = uio_buff.uio_offset;
 	kfree(buffer);
-	curproc->p_ft[fd]->lock = TRUE;
+	curproc->p_ft[fd]->lock = true;
 	return 0;
 }

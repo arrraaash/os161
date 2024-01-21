@@ -53,6 +53,7 @@
 
 #include <limits.h> 	// for OPEN_MAX (LUIGI)
 #include <vfs.h> 		// for vfs_close (LUIGI)
+#include <lib.h>
 
 /*
  * The process for the kernel; this holds all the kernel-only threads.
@@ -92,9 +93,12 @@ proc_create(const char *name)
 	for(int i=0; i< OPEN_MAX; i++){
 		proc->p_ft[i] = NULL;
 	}
-	for (int i=0; i<3;i++){
-		proc->p_ft[i]->name = "con:";
-	}
+	/* for (int i=0; i<3;i++){
+		//proc->p_ft[i]->name = "con:";
+		strcpy(proc->p_ft[i]->name, "con:");
+		//strncpy(proc->p_ft[i]->name, "con:", sizeof(proc->p_ft[i]->name));
+		//proc->p_ft[i]->name[sizeof(proc->p_ft[i]->name) - 1] = '\0';  // Ensure null-termination
+	} */
 	
 
 	/*---------------------*/

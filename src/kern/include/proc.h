@@ -39,7 +39,8 @@
 #include <spinlock.h>
 // added by ARASH ****//
 #include <limits.h>
-//#include <file_syscall.h>
+#include <file_syscalls.h>
+#include <fh.h>
 //*******************//
 struct addrspace;
 struct thread;
