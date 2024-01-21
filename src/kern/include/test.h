@@ -87,6 +87,8 @@ int writestress2(int, char **);
 int longstress(int, char **);
 int createstress(int, char **);
 int printfile(int, char **);
+// added by arash
+int test_syscalls(int, char **);
 
 /* other tests */
 int kmalloctest(int, char **);

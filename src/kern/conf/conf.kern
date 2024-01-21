@@ -442,4 +442,8 @@ file		test/synchtest.c
 file		test/semunit.c
 file		test/kmalloctest.c
 file		test/fstest.c
+####
+file        test/test_syscalls.c
+####
 optfile net	test/nettest.c
+

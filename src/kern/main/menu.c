@@ -43,6 +43,7 @@
 #include <sfs.h>
 #include <syscall.h>
 #include <test.h>
+#include <file_syscalls.h>
 #include "opt-sfs.h"
 #include "opt-net.h"
 
@@ -577,6 +578,7 @@ static const char *testmenu[] = {
 	"[fs4] FS write stress 2             ",
 	"[fs5] FS long stress                ",
 	"[fs6] FS create stress              ",
+	"[fs7] FS o-w-c test                 ",
 	NULL
 };
 
@@ -706,7 +708,7 @@ static struct {
 	{ "fs4",	writestress2 },
 	{ "fs5",	longstress },
 	{ "fs6",	createstress },
-
+	{ "fs7",	test_syscalls },
 	{ NULL, NULL }
 };
 
