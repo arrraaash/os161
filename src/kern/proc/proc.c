@@ -90,15 +90,16 @@ proc_create(const char *name)
 
 	/* addded for fd and fh*/
 	// i here is the file descriptor which is an integer
+	const char con = "con:";
 	for(int i=0; i< OPEN_MAX; i++){
 		proc->p_ft[i] = NULL;
 	}
-	/* for (int i=0; i<3;i++){
+	for (int i=0; i<3;i++){
 		//proc->p_ft[i]->name = "con:";
-		strcpy(proc->p_ft[i]->name, "con:");
+		strcpy(proc->p_ft[i]->name, con);
 		//strncpy(proc->p_ft[i]->name, "con:", sizeof(proc->p_ft[i]->name));
 		//proc->p_ft[i]->name[sizeof(proc->p_ft[i]->name) - 1] = '\0';  // Ensure null-termination
-	} */
+	}
 	
 
 	/*---------------------*/
