@@ -33,6 +33,9 @@ build-release:
 	bmake -C $(KERN_COMPILE_DIR) clean
 	@make make-dirs
 
+	# UPDATE THE OSTREE LOCATION BASED ON THE CURRENT ONE
+	make configure-custom-src-tree
+
 	@echo -e "bmake clean LOGS\n" > $(LOGS_DIR)/build-$(KERNEL_CONF).log 2>&1
 	bmake -C $(KERN_COMPILE_DIR) clean >> $(LOGS_DIR)/build-$(KERNEL_CONF).log 2>&1
 	
@@ -47,6 +50,7 @@ build-release:
 	
 	@echo -e "\n\n\n\n\n\n\nbmake install LOGS\n" >> $(LOGS_DIR)/build-$(KERNEL_CONF).log 2>&1
 	bmake -C $(KERN_COMPILE_DIR) install >> $(LOGS_DIR)/build-$(KERNEL_CONF).log 2>&1
+
 
 # RUN OS161 W/O DEBUGGER
 # USAGE: make run-release
