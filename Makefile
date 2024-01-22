@@ -36,20 +36,20 @@ build-release:
 	# UPDATE THE OSTREE LOCATION BASED ON THE CURRENT ONE
 	make configure-custom-src-tree
 
-	@echo -e "bmake clean LOGS\n" > $(LOGS_DIR)/build-$(KERNEL_CONF).log 2>&1
-	bmake -C $(KERN_COMPILE_DIR) clean >> $(LOGS_DIR)/build-$(KERNEL_CONF).log 2>&1
+	@echo -e "bmake clean LOGS\n" > $(LOGS_DIR)/bmake-clean-$(KERNEL_CONF).log 2>&1
+	bmake -C $(KERN_COMPILE_DIR) clean >> $(LOGS_DIR)/bmake-clean-$(KERNEL_CONF).log 2>&1
 	
-	@echo -e "\n\n\n\n\n\n\n./config LOGS\n" >> $(LOGS_DIR)/build-$(KERNEL_CONF).log 2>&1
-	cd $(KERN_CONF_DIR) && ./config $(KERNEL_CONF) >> $(LOGS_DIR)/build-$(KERNEL_CONF).log 2>&1
+	@echo -e "\n\n\n\n\n\n\n./config LOGS\n" > $(LOGS_DIR)/config-$(KERNEL_CONF).log 2>&1
+	cd $(KERN_CONF_DIR) && ./config $(KERNEL_CONF) >> $(LOGS_DIR)/config-$(KERNEL_CONF).log 2>&1
 	
-	@echo -e "\n\n\n\n\n\n\nbmake depend LOGS\n" >> $(LOGS_DIR)/build-$(KERNEL_CONF).log 2>&1
-	bmake -C $(KERN_COMPILE_DIR) depend >> $(LOGS_DIR)/build-$(KERNEL_CONF).log 2>&1
+	@echo -e "\n\n\n\n\n\n\nbmake depend LOGS\n" > $(LOGS_DIR)/bmake-depend-$(KERNEL_CONF).log 2>&1
+	bmake -C $(KERN_COMPILE_DIR) depend >> $(LOGS_DIR)/bmake-depend-$(KERNEL_CONF).log 2>&1
 	
-	@echo -e "\n\n\n\n\n\n\nbmake LOGS\n" >> $(LOGS_DIR)/build-$(KERNEL_CONF).log 2>&1
-	bmake -C $(KERN_COMPILE_DIR) >> $(LOGS_DIR)/build-$(KERNEL_CONF).log 2>&1	
+	@echo -e "\n\n\n\n\n\n\nbmake LOGS\n" > $(LOGS_DIR)/bmake-$(KERNEL_CONF).log 2>&1
+	bmake -C $(KERN_COMPILE_DIR) >> $(LOGS_DIR)/bmake-$(KERNEL_CONF).log 2>&1	
 	
-	@echo -e "\n\n\n\n\n\n\nbmake install LOGS\n" >> $(LOGS_DIR)/build-$(KERNEL_CONF).log 2>&1
-	bmake -C $(KERN_COMPILE_DIR) install >> $(LOGS_DIR)/build-$(KERNEL_CONF).log 2>&1
+	@echo -e "\n\n\n\n\n\n\nbmake install LOGS\n" > $(LOGS_DIR)/bmake-install-$(KERNEL_CONF).log 2>&1
+	bmake -C $(KERN_COMPILE_DIR) install >> $(LOGS_DIR)/bmake-install-$(KERNEL_CONF).log 2>&1
 
 	cd $(SRC_DIR) && mv defs.mk_bak defs.mk
 
