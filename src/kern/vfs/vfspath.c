@@ -41,6 +41,8 @@
 
 
 /* Does most of the work for open(). */
+// struct vnode **ret IS A POINTER TO THE POSITION IN MEMORY WHERE THE ret POINTER IS STORED,
+// WHICH MEANS THAT "*ret = vn" WILL SET THE POINTER TO THE ACTUAL VNODE ONE (LUIGI)
 int
 vfs_open(char *path, int openflags, mode_t mode, struct vnode **ret)
 {

@@ -35,8 +35,9 @@
 #include <thread.h>
 #include <current.h>
 #include <syscall.h>
-//
+#include <kern/types.h>
 #include <file_syscalls.h>
+#include <copyinout.h>
 
 
 /*
@@ -81,9 +82,19 @@ void
 syscall(struct trapframe *tf)
 {
 	int callno;
-	int32_t retval;
 	int err;
+	int whence;
+	int high_seek_pos;
+	int low_seek_pos;
+	off_t seek_pos;
 
+	// USE TWO VARIABLES TO STORE THE RETURNED VALUES. 
+	// FOR ALL THE SYSTEM CALLS THAT RETURN A SINGLE 32-BIT VALUE, THE VALUE WILL BE 
+	// STORED IN retval_low AND THE VALUE OF retval_high WILL BE 0.
+	// FOR THE SYSTEM CALLS THAT RETURN A 64-BIT VALUE (e.g. SYS_lseek()), THE VALUE WILL BE STORED IN
+	// retval_low AND retval_high.
+	int32_t retval_low, retval_high;
+	
 	KASSERT(curthread != NULL);
 	KASSERT(curthread->t_curspl == 0);
 	KASSERT(curthread->t_iplhigh_count == 0);
@@ -99,36 +110,101 @@ syscall(struct trapframe *tf)
 	 * like write.
 	 */
 
-	retval = 0;
+	retval_low 		= 0;
+	retval_high 	= 0;
+	err 			= 0;
+	whence 			= 0;
+	seek_pos 		= 0;
+	high_seek_pos	= 0;
+	low_seek_pos 	= 0;
+
+	/* kprintf("\nsyscall.c:\n");
+	kprintf("callno (tf->tf_v0): %d\n", tf->tf_v0);
+	kprintf("tf->tf_a0: %d\n", tf->tf_a0);
+	kprintf("tf->tf_a1: %d\n", tf->tf_a1);
+	kprintf("tf->tf_a2: %d\n", tf->tf_a2); */
 
 	switch (callno) {
-	    case SYS_reboot:
-		err = sys_reboot(tf->tf_a0);
-		break;
+	    
+		case SYS_reboot:
+			err = sys_reboot(tf->tf_a0);
+			break;
 
 	    case SYS___time:
-		err = sys___time((userptr_t)tf->tf_a0,
-				 (userptr_t)tf->tf_a1);
-		break;
+			err = sys___time((userptr_t)tf->tf_a0, (userptr_t)tf->tf_a1);
+			break;
 
 	    /* Add stuff here */
 
 		case SYS_open:
-		err = sys_open((const char *)tf->tf_a0,(int)tf->tf_a1, &retval);
-		break;
+			// int sys_open(const char *filename, int flags, int *retval)
+			err 		= sys_open((char *)tf->tf_a0, tf->tf_a1, &retval_high);
+			retval_low  = 0;
+			break;
 
 		case SYS_close:
-		err = sys_close((int)tf->tf_a0);
-		break;
+			// int sys_close(int fd)
+			err = sys_close((int) tf->tf_a0);
+			break;
 
+		case SYS_read:
+			// int sys_read(int fd, void *buf, size_t buflen, int *retval)
+			err 		= sys_read((int) tf->tf_a0, (void *)tf->tf_a1, (size_t) tf->tf_a2, &retval_high);
+			retval_low  = 0;
+			break;
+		
 		case SYS_write:
-		err = sys_write((int)tf->tf_a0,(void *)tf->tf_a1,(size_t)tf->tf_a2, &retval);
-		break;
+			// int sys_write(int fd, const void *buf, size_t nbytes, int *retval)
+			err 		= sys_write((int) tf->tf_a0, (void *)tf->tf_a1, (size_t) tf->tf_a2, &retval_high);
+			retval_low  = 0;
+			break;
+
+		case SYS_lseek:
+			// AS WRITTEN ABOVE, 64-BIT ARGUMENTS ARE PASSED IN ALIGNED PAIRS OF REGISTERS.
+			// THIS MEANS THAT IF THE FIRST ARGUMENT, WHICH IS 32-BIT, WILL GO INTO THE a0 REGISTER,
+			// AND THE SECOND ARGUMENT, WHICH IS 64-BIT SINCE IT IS AN off_t TYPE, WILL GO INTO THE a2-a3 REGISTERS
+			// FOLLOWING THE BIG ENDIAN CONVENTION, WHICH LEADS TO THE FOLLOWING:
+			// 	- THE LOWER 32-BITS IN a2
+			// 	- THE HIGHER 32-BITS IN a3
+			// THE a1 REGISTER WILL BE UNUSED AND FURTHER ARGUMENTS (whence) WILL BE FETCHED FROM THE STACK USING copyin()
+			// AND STARTING AT sp+16 TO SKIP OVER THE SLOTS FOR THE REGISTERIZED VALUES.
+			// int sys_lseek(int fd, off_t pos, int whence, int *retval_high, int *retval_low)
+			copyin((const_userptr_t)tf->tf_sp+16, &whence, sizeof(int));
+			high_seek_pos	= tf->tf_a2;
+			low_seek_pos 	= tf->tf_a3;
+			seek_pos 		= ((off_t)high_seek_pos << 32) | low_seek_pos;
+			err 			= sys_lseek((int) tf->tf_a0, seek_pos, whence, &seek_pos);
+			retval_high 	= seek_pos >> 32;
+			retval_low 		= seek_pos & 0xFFFFFFFF;
+			break;
+
+		case SYS_dup2:
+			// int sys_dup2(int oldfd, int newfd, int *retval)
+			err 		= sys_dup2((int) tf->tf_a0, (int) tf->tf_a1, &retval_high);
+			retval_low  = 0;
+			break;
+
+		case SYS_chdir:
+			// int sys_chdir(const char *pathname)
+			err = sys_chdir((char *)tf->tf_a0);
+			break;
+		
+		case SYS___getcwd:
+			// int sys___getcwd(char *buf, size_t buflen, int *retval)
+			err 		= sys___getcwd((char *)tf->tf_a0, tf->tf_a1, &retval_high);
+			retval_low  = 0;
+			break;
+
+		/* case SYS_remove:
+			// int sys_remove(const char *pathname)
+			err = sys_remove((char *)tf->tf_a0);
+			break; */
 
 	    default:
-		kprintf("Unknown syscall %d\n", callno);
-		err = ENOSYS;
-		break;
+			kprintf("Unknown syscall %d\n", callno);
+			err = ENOSYS;
+			break;
+	
 	}
 
 
@@ -143,7 +219,10 @@ syscall(struct trapframe *tf)
 	}
 	else {
 		/* Success. */
-		tf->tf_v0 = retval;
+		// BEING THE ARCHITECTURE BIG ENDIAN, THE LOWER 32-BITS OF THE 64-BIT VALUE ARE STORED IN tf->tf_v0
+		// AND THE HIGHER 32-BITS ARE STORED IN tf->tf_v1.
+		tf->tf_v0 = retval_high;
+		tf->tf_v1 = retval_low;
 		tf->tf_a3 = 0;      /* signal no error */
 	}
 

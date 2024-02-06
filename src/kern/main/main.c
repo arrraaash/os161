@@ -101,7 +101,7 @@ boot(void)
 	kprintf("%s", harvard_copyright);
 	kprintf("\n");
 
-	kprintf("Arash, Luigi and Kevin's system version %s (%s #%d)\n",
+	kprintf("Arash, Luigi and Kevin's OS/161 version %s (%s #%d)\n",
 		GROUP_VERSION, buildconfig, buildversion);
 	kprintf("\n");
 

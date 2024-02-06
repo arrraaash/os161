@@ -53,6 +53,13 @@ build-release:
 
 	cd $(SRC_DIR) && mv defs.mk_bak defs.mk
 
+# BUILD TEST PROGRAMS AND RUN 
+# USAGE: make test
+PHONY: test
+test: 
+	cd $(SRC_DIR)/userland && bmake && bmake install 
+	make run-release
+
 # ARASH!!!
 # BUILD NEW VERSION FOR KERNEL
 # USAGE: make build-release KERNEL_CONF=<DUMBVM/GENERAL/...>
@@ -81,13 +88,13 @@ build-release-arash:
 # RUN OS161 W/O DEBUGGER
 # USAGE: make run-release
 PHONY: run-release
-run-release:
+run-release: | build-release
 	cd $(ROOT_DIR) && sys161 kernel
 
 # RUN OS161 WITH DEBUGGER
-# USAGE: make run-debug
-PHONY: run-debug
-run-debug:
+# USAGE: make debug
+PHONY: debug
+debug:
 	cd $(ROOT_DIR) && sys161 -w kernel
 
 

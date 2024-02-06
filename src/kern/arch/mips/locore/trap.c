@@ -195,6 +195,7 @@ mips_trap(struct trapframe *tf)
 		}
 
 		curthread->t_in_interrupt = old_in;
+		
 		goto done2;
 	}
 

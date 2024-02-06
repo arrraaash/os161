@@ -48,12 +48,7 @@
 #include <current.h>
 #include <addrspace.h>
 #include <vnode.h>
-#include <fh.h>
-#include <limits.h>
-
-#include <limits.h> 	// for OPEN_MAX (LUIGI)
-#include <vfs.h> 		// for vfs_close (LUIGI)
-#include <lib.h>
+#include <filetable.h>
 
 /*
  * The process for the kernel; this holds all the kernel-only threads.
@@ -88,21 +83,13 @@ proc_create(const char *name)
 	/* VFS fields */
 	proc->p_cwd = NULL;
 
-	/* addded for fd and fh*/
-	// i here is the file descriptor which is an integer
-	/* const char con[] = "con:"; */
-	for(int i=0; i< OPEN_MAX; i++){
-		proc->p_ft[i] = NULL;
+	// CREATE FILETABLE
+	proc->p_filetable = filetable_init();
+	if (proc->p_filetable == NULL) {
+		kfree(proc->p_name);
+		kfree(proc);
+		return NULL;
 	}
-	/* for (int i=0; i<3;i++){
-		//proc->p_ft[i]->name = "con:";
-		strcpy(proc->p_ft[i]->name, &con);
-		//strncpy(proc->p_ft[i]->name, "con:", sizeof(proc->p_ft[i]->name));
-		//proc->p_ft[i]->name[sizeof(proc->p_ft[i]->name) - 1] = '\0';  // Ensure null-termination
-	} */
-	
-
-	/*---------------------*/
 
 	return proc;
 }
@@ -187,14 +174,6 @@ proc_destroy(struct proc *proc)
 		as_destroy(as);
 	}
 
-	/* I ADDED THIS PART FOR FILE CLOSING WHEN PROC IS CLOSED */
-	
-	/* for (int i=0; i<OPEN_MAX;i++){
-		vfs_close(proc->p_ft[i]->I_fd);
-		proc->p_ft[i] = NULL;
-	} */
-	/* MY MODIFICATION ENDS HERE */
-
 	KASSERT(proc->p_numthreads == 0);
 	spinlock_cleanup(&proc->p_lock);
 
@@ -227,6 +206,13 @@ proc_create_runprogram(const char *name)
 
 	newproc = proc_create(name);
 	if (newproc == NULL) {
+		return NULL;
+	}
+
+	// CREATE THE STDIO DEVICES ENTRIES
+	int result = init_stdio(newproc->p_filetable);
+	if (result) {
+		kprintf("Error creating stdio devices\n");
 		return NULL;
 	}
 
