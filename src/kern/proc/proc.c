@@ -407,8 +407,8 @@ void proc_table_create(void){
     for (int i = 1; i <= MAX_PROC_NUM; i++) {
         ptable->process[i] = NULL;
     }
-    ptable->next_pid = 1;
-    ptable->num_processes = 1;
+    //ptable->next_pid = 1;
+    //ptable->num_processes = 1;
 }
 
 int assign_pid(struct proc *proc) {
