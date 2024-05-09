@@ -397,7 +397,7 @@ mips_usermode(struct trapframe *tf)
 	 * (Exercise: why?)
 	 */
 	KASSERT(SAME_STACK(cpustacks[curcpu->c_number]-1, (vaddr_t)tf));
-
+	//kprintf("IM HERE\n");
 	/*
 	 * This actually does it. See exception-*.S.
 	 */

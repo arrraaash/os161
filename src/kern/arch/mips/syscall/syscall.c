@@ -38,6 +38,7 @@
 #include <kern/types.h>
 #include <file_syscalls.h>
 #include <copyinout.h>
+#include <proc_syscalls.h>
 
 
 /*
@@ -199,6 +200,30 @@ syscall(struct trapframe *tf)
 			// int sys_remove(const char *pathname)
 			err = sys_remove((char *)tf->tf_a0);
 			break; */
+		case SYS_getpid:
+			err = sys_getpid(&retval_high);
+			retval_low = 0;
+			break;
+		
+		case SYS_fork:  
+			err = sys_fork(tf, &retval_high);
+			retval_low = 0;
+			break;
+			
+		case SYS__exit:
+			err = 0;
+			sys_exit((int) tf->tf_a0);
+			break;
+
+		case SYS_waitpid:
+			err = sys_waitpid((pid_t)tf->tf_a0,(const struct __userptr *) tf->tf_a1, (pid_t *)&retval_high, (uint32_t) tf->tf_a2);
+			retval_low = 0;
+			break;
+
+		case SYS_execv:
+			err = sys_execv((const char *)tf->tf_a0, (char **)tf->tf_a1, &retval_high);
+			retval_low = 0;
+			break;
 
 	    default:
 			kprintf("Unknown syscall %d\n", callno);
@@ -247,8 +272,21 @@ syscall(struct trapframe *tf)
  *
  * Thus, you can trash it and do things another way if you prefer.
  */
-void
+/* void
+enter_forked_process(struct trapframe *tf,unsigned long data2)
+{	
+	(void) data2;
+	tf->tf_v0 = 0;
+	tf->tf_a3 = 0;
+	tf->tf_epc += 4;
+	struct trapframe ntf=*tf;
+	//kfree(tf);
+	mips_usermode(&ntf);
+} */
+
+/* void
 enter_forked_process(struct trapframe *tf)
 {
 	(void)tf;
-}
+} */
+

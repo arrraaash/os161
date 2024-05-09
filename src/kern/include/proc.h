@@ -72,6 +72,11 @@ struct proc {
 	struct vnode *p_cwd;		/* current working directory */
 
 	/* add more material here as needed */
+	// PROCESS ID
+	pid_t p_pid;
+	pid_t p_ppid; // Parent process ID
+	int exit; // Process exited
+	bool exit_status;
 
 	// FILETABLE
 	struct filetable *p_filetable; /* File table for this process */
@@ -101,5 +106,14 @@ struct addrspace *proc_getas(void);
 /* Change the address space of the current process, and return the old one. */
 struct addrspace *proc_setas(struct addrspace *);
 
+void proc_table_create(void);
+
+int assign_pid(struct proc *proc);
+
+int free_pid(struct proc *proc);
+
+int validity_check_pid(pid_t pid);
+void wait_func(pid_t pid);
+void copy_status(const struct __userptr * status);
 
 #endif /* _PROC_H_ */

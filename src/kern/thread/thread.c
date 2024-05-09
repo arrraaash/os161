@@ -455,7 +455,6 @@ thread_make_runnable(struct thread *target, bool already_have_lock)
 
 	/* Lock the run queue of the target thread's cpu. */
 	targetcpu = target->t_cpu;
-
 	if (already_have_lock) {
 		/* The target thread's cpu should be already locked. */
 		KASSERT(spinlock_do_i_hold(&targetcpu->c_runqueue_lock));
@@ -463,7 +462,7 @@ thread_make_runnable(struct thread *target, bool already_have_lock)
 	else {
 		spinlock_acquire(&targetcpu->c_runqueue_lock);
 	}
-
+	
 	/* Target thread is now ready to run; put it on the run queue. */
 	target->t_state = S_READY;
 	threadlist_addtail(&targetcpu->c_runqueue, target);
@@ -504,7 +503,7 @@ thread_fork(const char *name,
 	if (newthread == NULL) {
 		return ENOMEM;
 	}
-
+	
 	/* Allocate a stack */
 	newthread->t_stack = kmalloc(STACK_SIZE);
 	if (newthread->t_stack == NULL) {
@@ -512,7 +511,7 @@ thread_fork(const char *name,
 		return ENOMEM;
 	}
 	thread_checkstack_init(newthread);
-
+	
 	/*
 	 * Now we clone various fields from the parent thread.
 	 */
@@ -537,13 +536,13 @@ thread_fork(const char *name,
 	 * for the spllower() that will be done releasing it.
 	 */
 	newthread->t_iplhigh_count++;
-
+	//kprintf("here in creating Thread\n");
 	/* Set up the switchframe so entrypoint() gets called */
 	switchframe_init(newthread, entrypoint, data1, data2);
-
+	//kprintf("here in creating Thread2\n");
 	/* Lock the current cpu's run queue and make the new thread runnable */
 	thread_make_runnable(newthread, false);
-
+	
 	return 0;
 }
 

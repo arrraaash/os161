@@ -49,11 +49,16 @@
 #include <addrspace.h>
 #include <vnode.h>
 #include <filetable.h>
+#include <proc_table.h>
+#include <copyinout.h>
 
 /*
  * The process for the kernel; this holds all the kernel-only threads.
  */
 struct proc *kproc;
+struct proc_table *ptable;
+
+//int counter = 0;
 
 /*
  * Create a proc structure.
@@ -83,6 +88,7 @@ proc_create(const char *name)
 	/* VFS fields */
 	proc->p_cwd = NULL;
 
+
 	// CREATE FILETABLE
 	proc->p_filetable = filetable_init();
 	if (proc->p_filetable == NULL) {
@@ -91,6 +97,28 @@ proc_create(const char *name)
 		return NULL;
 	}
 
+	ptable->process[ptable->next_pid] = proc;
+	if (strcmp(name,"[kernel]") == 0){
+		proc->p_pid = 1;
+		ptable->next_pid = 2;
+	}
+	else {
+	//proc->exit = 0;
+	// proc->exit_status = false;
+	//  proc->p_pid = counter;
+	//  counter++;
+		int err = assign_pid(proc);
+		if (err!=0){
+			panic("shouldnt be here");
+		}
+		
+		ptable->num_processes ++;
+	}
+	
+	proc->exit_status = false;
+	// //assign_pid(proc);
+	
+	
 	return proc;
 }
 
@@ -176,9 +204,16 @@ proc_destroy(struct proc *proc)
 
 	KASSERT(proc->p_numthreads == 0);
 	spinlock_cleanup(&proc->p_lock);
-
+	int err = free_pid(proc);
+	if(err!=0){
+		panic("shouldnt be here");
+	}
+	proc->exit_status=true;
+	//proc->exit=1;
+	ptable->num_processes --;
 	kfree(proc->p_name);
 	kfree(proc);
+	//kfree(ptable->process[proc->p_pid]);
 }
 
 /*
@@ -187,10 +222,24 @@ proc_destroy(struct proc *proc)
 void
 proc_bootstrap(void)
 {
+	//kprintf("proc_bootstrap\n");
+	proc_table_create();
+	// ptable->num_processes = 1;
+	//ptable->process[0]->p_name = "kproc";
+	// ptable->next_pid = 2;
+	//kproc->p_pid = 1;
+	/* kproc-> exit = 0;
+	kproc->exit_status = false; */
+	//-----------------------------------------
+	//kprintf("proc_bootstrap2\n");
 	kproc = proc_create("[kernel]");
 	if (kproc == NULL) {
 		panic("proc_create for kproc failed\n");
 	}
+	//kprintf("proc_bootstrap3\n");
+	//-----------------------------------------
+	//ptable ->process[0] = kproc;
+	
 }
 
 /*
@@ -202,6 +251,7 @@ proc_bootstrap(void)
 struct proc *
 proc_create_runprogram(const char *name)
 {
+	//kprintf("proc_create_runprogram\n");
 	struct proc *newproc;
 
 	newproc = proc_create(name);
@@ -233,9 +283,22 @@ proc_create_runprogram(const char *name)
 		newproc->p_cwd = curproc->p_cwd;
 	}
 	spinlock_release(&curproc->p_lock);
+	
+	//-----------------------------------------
+	// int err = assign_pid(newproc);
+	// if (err){
+	// 	panic("proc_create for failed\n");
+	// }
+	/* newproc->p_ppid = curproc->p_pid; //assigning the parent pid for the cild process
+	newproc->exit = false;
+	newproc->exit_status = false; */
+	//newproc->p_filetable = filetable_init();
+	//-----------------------------------------
+	//ptable->process[newproc->p_pid] = newproc;
 
 	return newproc;
 }
+
 
 /*
  * Add a thread to a process. Either the thread or the process might
@@ -334,3 +397,64 @@ proc_setas(struct addrspace *newas)
 	spinlock_release(&proc->p_lock);
 	return oldas;
 }
+
+void proc_table_create(void){
+
+    ptable = kmalloc(sizeof(struct proc_table));
+    if (ptable == NULL) {
+        panic("Could not create process table\n");
+    }
+    for (int i = 1; i <= MAX_PROC_NUM; i++) {
+        ptable->process[i] = NULL;
+    }
+    ptable->next_pid = 1;
+    ptable->num_processes = 1;
+}
+
+int assign_pid(struct proc *proc) {
+    if (ptable->num_processes == MAX_PROC_NUM) {
+		kprintf("Max number of processes reached\n");
+        return EMPROC;
+    }
+	//kprintf("assigning pid is %d\n",ptable->next_pid);
+	//struct proc *curproc = curproc;
+	//kprintf("current process is %d\n", curproc->p_pid);
+	proc->p_pid = ptable->next_pid;
+    proc ->p_ppid = curproc->p_pid;
+	for (int i=3; i <= MAX_PROC_NUM; i++){
+		//ptable->next_pid++;
+		if (ptable->process[i] == NULL){
+			ptable->next_pid = i;
+			//kprintf("next pid is %d\n", ptable->next_pid);
+			break;
+		}
+	}
+    //kprintf("pid assigned is %d\n", proc->p_pid); 
+    //ptable->num_processes ++;
+    return 0; 
+}
+
+int free_pid(struct proc *proc) {
+	validity_check_pid(proc->p_pid);
+    //ptable->num_processes --;
+    ptable->process[proc->p_pid] = NULL;
+    return 0; 
+}
+
+
+int validity_check_pid(pid_t pid) {
+	if (pid < 1 || pid >= MAX_PROC_NUM) {
+		return ESRCH;
+	}
+	if (ptable->process[pid] == NULL) {
+		return ESRCH;
+	}
+	return 0;
+}
+
+void wait_func(pid_t pid) {
+	// Check if the process is already exited
+	while (ptable->process[pid]->exit_status!=true)
+        thread_yield();
+}
+
