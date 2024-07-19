@@ -16,7 +16,7 @@
 #include <vfs.h>
 #include <copyinout.h>
 
-
+//---------------- process system call------------------------
 void
 enter_usermode(void *data1, unsigned long data2);
 
